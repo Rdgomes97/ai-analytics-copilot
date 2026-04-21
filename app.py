@@ -1,5 +1,7 @@
 import streamlit as st
 from src.loader import load_csv
+from src.eda import get_column_info, get_missing_values, get_descriptive_stats
+from src.charts import numeric_histogram, categorical_bar
 
 # Configuração da página
 st.set_page_config(
@@ -37,18 +39,38 @@ if uploaded_file is not None:
     st.dataframe(df.head())
 
     st.markdown("## Column Information")
-    column_info = df.dtypes.astype(str).reset_index()
-    column_info.columns = ["column", "dtype"]
-    st.dataframe(column_info)
+    st.dataframe(get_column_info(df))
 
     st.markdown("## Missing Values")
-    missing_df = df.isnull().sum().reset_index()
-    missing_df.columns = ["column", "missing_values"]
-    missing_df["missing_pct"] = (missing_df["missing_values"] / len(df) * 100).round(2)
-    st.dataframe(missing_df.sort_values(by="missing_values", ascending=False))
+    st.dataframe(get_missing_values(df))
 
     st.markdown("## Descriptive Statistics")
-    st.dataframe(df.describe(include="all").transpose())
+    st.dataframe(get_descriptive_stats(df))
+
+    st.markdown("## Automatic Charts")
+
+    numeric_cols = df.select_dtypes(include=["number"]).columns.tolist()
+    categorical_cols = df.select_dtypes(include=["object", "category"]).columns.tolist()
+
+    if numeric_cols:
+        selected_numeric = st.selectbox(
+            "Select a numeric column",
+            numeric_cols
+        )
+        st.plotly_chart(
+            numeric_histogram(df, selected_numeric),
+            use_container_width=True
+        )
+
+    if categorical_cols:
+        selected_categorical = st.selectbox(
+            "Select a categorical column",
+            categorical_cols
+        )
+        st.plotly_chart(
+            categorical_bar(df, selected_categorical),
+            use_container_width=True
+        )
 
 else:
     st.info("Upload a CSV file to begin.")

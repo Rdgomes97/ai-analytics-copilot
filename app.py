@@ -20,9 +20,7 @@ uploaded_file = st.file_uploader(
     type=["csv"]
 )
 
-# Se arquivo enviado
 if uploaded_file is not None:
-
     df = load_csv(uploaded_file)
 
     st.success("File uploaded successfully!")
@@ -37,6 +35,20 @@ if uploaded_file is not None:
 
     st.markdown("## Data Preview")
     st.dataframe(df.head())
+
+    st.markdown("## Column Information")
+    column_info = df.dtypes.astype(str).reset_index()
+    column_info.columns = ["column", "dtype"]
+    st.dataframe(column_info)
+
+    st.markdown("## Missing Values")
+    missing_df = df.isnull().sum().reset_index()
+    missing_df.columns = ["column", "missing_values"]
+    missing_df["missing_pct"] = (missing_df["missing_values"] / len(df) * 100).round(2)
+    st.dataframe(missing_df.sort_values(by="missing_values", ascending=False))
+
+    st.markdown("## Descriptive Statistics")
+    st.dataframe(df.describe(include="all").transpose())
 
 else:
     st.info("Upload a CSV file to begin.")
